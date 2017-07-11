@@ -1,0 +1,186 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+    <title>Phaser - Making your first game, part 9</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+function preload() {
+
+    game.load.image('sky', 'assets/sky.png');
+    game.load.image('ground', 'assets/platform.png');
+    game.load.image('star', 'assets/star.png');
+    game.load.image('bomb','assets/bomb.png');
+    game.load.image('diamond','assets/diamond.png');
+    game.load.image('explosion','assets/explosion.png')
+    game.load.spritesheet('dude', 'assets/dude.png', 32, 48);
+    game.load.spritesheet('fruits','assets/fruitnveg32wh37.png',32,37);
+
+}
+
+var player;
+var platforms;
+var cursors;
+
+var stars;
+var bombs;
+var diamonds;
+var speed = 100;
+var explosion;
+var score = 0;
+var scoreText;
+var gameOver = false;
+
+function create() {
+
+//physics
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+
+//bg
+    game.add.sprite(0, 0, 'sky');
+
+//platform
+    platforms = game.add.group();
+    platforms.enableBody = true;
+//ground
+    var ground = platforms.create(0, game.world.height - 64, 'ground');
+    ground.scale.setTo(2, 2);
+
+//solidify ground
+    ground.body.immovable = true;
+
+//player
+    player = game.add.sprite(32, game.world.height - 64, 'dude');
+    game.physics.arcade.enable(player);
+
+//walk
+    player.animations.add('left', [0, 1, 2, 3], 10, true);
+    player.animations.add('right', [5, 6, 7, 8], 10, true);
+
+//add elements with physics
+    stars = game.add.group();
+    bombs = game.add.group();
+    diamonds = game.add.group();
+    explosions = game.add.group();
+    stars.enableBody = true;
+    bombs.enableBody = true;
+    diamonds.enableBody = true;
+
+//wave
+
+    game.time.events.loop(Phaser.Timer.SECOND * 1.5, wave);
+
+
+//score
+    scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+
+//controls
+    cursors = game.input.keyboard.createCursorKeys();
+    
+}
+
+function wave(){
+        speed = speed * 1.01;
+        var position = Math.floor((Math.random()*10)+1);
+    for (var i = 0; i < 12 && gameOver ===false; i++){
+     var drop = Math.floor((Math.random() * 10) + 1);
+
+        if (drop === 2 && position === i){
+        var bomb = bombs.create(i * 70, 0, 'bomb');
+        bomb.body.velocity.y = speed+Math.random()*10;
+        bomb.body.bounce.y = 0.7 + Math.random() * 0.2;
+        bomb.scale.set(0.2);
+
+        }
+
+        else if (drop === 3 && position === i){
+        var diamond = diamonds.create(i * 70, 0, 'diamond');
+
+        diamond.body.velocity.y = speed+Math.random()*10;
+        diamond.body.bounce.y = 0.7 + Math.random() * 0.2;
+        }
+
+        else if (position === i){
+        var star = stars.create(i * 70, 0, 'star');
+        star.body.velocity.y = speed+Math.random()*10;
+        star.body.bounce.y = 0.7 + Math.random() * 0.2;
+        }
+    }
+
+}
+
+function update() {
+
+
+    game.physics.arcade.collide(player, platforms);
+    game.physics.arcade.overlap(player, stars, collectStar, null, this);
+    game.physics.arcade.overlap(player, diamonds, collectDiamond, null, this);
+    game.physics.arcade.overlap(player, bombs, collectBomb, null, this);
+    game.physics.arcade.overlap(diamonds, platforms,landDimond, null, this);
+
+    player.body.velocity.x = 0;
+
+    if (cursors.left.isDown)
+    {
+        player.body.velocity.x = -560;
+        player.animations.play('left');
+    }
+    else if (cursors.right.isDown)
+    {
+        player.body.velocity.x = 560;
+        player.animations.play('right');
+    }
+    else
+    {
+        player.animations.stop();
+        player.frame = 4;
+    }
+
+    
+
+}
+
+function collectStar (player, star) {
+    star.kill();
+    score += 5;
+    scoreText.text = 'Score: ' + score;
+
+}
+
+function collectDiamond (player, diamond) {
+    diamond.kill();
+    score += 10;
+    scoreText.text = 'Score: ' + score;
+
+}
+
+function collectBomb (player, bomb) {
+    bomb.kill();
+    player.kill();
+    var explosion = explosions.create(0,0,'explosion');
+    explosion.scale.set(3.2);
+    game.add.text(300,300, 'GAME OVER', { fontSize: '100px', fill: '#000' });
+    gameOver = true;
+ }
+
+ function landDimond (platform, diamond){
+
+    game.add.text(300,300, 'GAME OVER', { fontSize: '100px', fill: '#000' });
+    gameOver = true;
+ }
+
+</script>
+
+</body>
+</html>
