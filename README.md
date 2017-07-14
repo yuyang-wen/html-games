@@ -1,1 +1,1 @@
-A simple game made with phaser framework. 
+A simple game made with javascript and phaser framework. 
